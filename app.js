@@ -9,17 +9,17 @@ const xss = require('xss-clean')
 const rateLimit = require('express-rate-limit')
 const hpp = require('hpp')
 const cors = require('cors')
-
+// 错误处理中间件
 const errorHandler = require('./middleware/error')
-
 const DBConnection = require('./config/db')
+const authRoutes = require('./routes/auth')
+const userRoutes = require('./routes/users')
 
+//引入自定义环境变量
 dotenv.config({ path: './config/.env' })
 
 DBConnection()
 
-const authRoutes = require('./routes/auth')
-const userRoutes = require('./routes/users')
 
 const app = express()
 
@@ -30,7 +30,7 @@ app.use(cookieParser())
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'))
 }
-
+//安全相关中间件
 // Sanitize data
 app.use(mongoSanitize())
 
@@ -53,7 +53,9 @@ app.use(limiter)
 
 // Prevent http param pollution
 app.use(hpp())
-
+//加载自动生成api文档静态文件
+app.use('/doc', express.static('apidoc'));
+//加载路由
 const versionOne = routeName => `/api/v1/${routeName}`
 
 app.use(versionOne('auth'), authRoutes)

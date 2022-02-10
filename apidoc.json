@@ -1,0 +1,8 @@
+{
+  "name": "RESTful API",
+  "version": "1.0.0",
+  "description": "有关用户的接口文档",
+  "title": "api-doc",
+  "url": "http://127.0.0.1:3001",
+  "sampleUrl": "http://127.0.0.1:3001"
+}

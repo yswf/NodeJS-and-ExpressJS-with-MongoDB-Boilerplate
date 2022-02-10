@@ -5,9 +5,44 @@ const sendEmail = require('../utils/sendEmail')
 
 const User = require('../models/User')
 
-// @desc    Register user
-// @route   POST /api/v1/auth/register
-// @access  Public
+/**
+ * @api {post} /api/v1/auth/register Register User
+ * @apiGroup Auth
+ * @apiDescription 注册用户
+ *
+ * @apiBody {String} name 用户名
+ * @apiBody {String} email 邮箱
+ * @apiBody {String{5..12}} password 密码
+ * @apiBody {String=admin,user} role 身份 admin or user
+ * @apiParamExample {json} request-example
+ * {
+ *   "name": "Fan Wang",
+ *   "email": "fan_wang@wistron.com",
+ *  "password": "test",
+ * "role": "admin"
+ * }
+ * @apiSuccess {String} token 该用户token
+ * @apiSuccessExample  {json} success-example
+ * {
+ *   "success": true,
+ *   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.*eyJpZCI6IjYyMDM3OTc4NGM0NDkwMzZlNGJlZGIwNyIsImlhdCI6MTY0NDM5NDg3MiwiZXhwIjoxNjQ2OTg2ODcyfQ.Hb_VQGov9JlE6Fd748d8r3WoLM5flBETX-XVnCZLL-A"
+ * }
+ * @apiError {String} error 错误信息
+ * @apiErrorExample  {json} error-example
+ * {
+ *   "success": false,
+ *  "error": [
+ *      {
+ *           "field": "role",
+ *          "message": "`` is not a valid enum value for path `role`."
+ *       },
+ *       {
+ *           "field": "email",
+ *           "message": "email already exists."
+ *       }
+ *   ]
+ *}
+ */
 exports.register = asyncHandler(async (req, res, next) => {
   let { name, email, password, role } = req.body
 
@@ -23,9 +58,14 @@ exports.register = asyncHandler(async (req, res, next) => {
   sendTokenResponse(user, 200, res)
 })
 
-// @desc    Login user
-// @route   POST /api/v1/auth/login
-// @access  Public
+/**
+ * @api {post} /api/v1/auth/login Login User
+ * @apiGroup Auth
+ * @apiDescription 登陆用户
+ *
+ * @apiBody {String} email 邮箱
+ * @apiBody {String{5..12}} password 密码
+ */
 exports.login = asyncHandler(async (req, res, next) => {
   let { email, password } = req.body
 
@@ -50,9 +90,12 @@ exports.login = asyncHandler(async (req, res, next) => {
   sendTokenResponse(user, 200, res)
 })
 
-// @desc    Log user out / clear cookie
-// @route   GET /api/v1/auth/logout
-// @access  Private
+/**
+ * @api {post} /api/v1/auth/logout Log User Out
+ * @apiGroup Auth
+ * @apiDescription 注销登陆
+ * @apiHeader {String} authorization 有效token值.
+ */
 exports.logout = asyncHandler(async (req, res, next) => {
   res.cookie('token', 'none', {
     expires: new Date(Date.now() + 10 * 1000),
@@ -62,18 +105,26 @@ exports.logout = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, data: {} })
 })
 
-// @desc    Get current logged in user
-// @route   POST /api/v1/auth/me
-// @access  Private
+/**
+ * @api {post} /api/v1/auth/me Get current logged in user
+ * @apiGroup Auth
+ * @apiDescription 当前用户信息
+ * @apiHeader {String} authorization 有效token值.
+ */
 exports.getMe = asyncHandler(async (req, res, next) => {
   const user = req.user
 
   res.status(200).json({ success: true, data: user })
 })
-
-// @desc    Update user details
-// @route   POST /api/v1/auth/updatedetails
-// @access  Private
+/**
+ * @api {put} /api/v1/auth/updatedetails Update user details
+ * @apiGroup Auth
+ * @apiDescription 修改用户信息
+ *
+ * @apiHeader {String} authorization 有效token值.
+ * @apiBody {String} name 用户名
+ * @apiBody {String} email 邮箱
+ */
 exports.updateDetails = asyncHandler(async (req, res, next) => {
   const fieldsToUpdate = {
     name: req.body.name,
@@ -87,10 +138,14 @@ exports.updateDetails = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({ success: true, data: user })
 })
-
-// @desc    Update password
-// @route   PUT /api/v1/auth/updatepassword
-// @access  Private
+/**
+ * @api {put} /api/v1/auth/updatepassword Update password
+ * @apiGroup Auth
+ * @apiDescription 更改密码
+ * @apiHeader {String} authorization 有效token值.
+ * @apiBody {String} currentPassword 旧密码
+ * @apiBody {String} newPassword 新密码
+ */
 exports.updatePassword = asyncHandler(async (req, res, next) => {
   const user = await User.findById(req.user.id).select('+password')
 
@@ -103,10 +158,12 @@ exports.updatePassword = asyncHandler(async (req, res, next) => {
 
   sendTokenResponse(user, 200, res)
 })
-
-// @desc    Forgot password
-// @route   POST /api/v1/auth/forgotpassword
-// @access  Public
+/**
+ * @api {post} /api/v1/auth/forgotpassword  Forgot password
+ * @apiGroup Auth
+ * @apiDescription 找回密码
+ * @apiBody {String} email 邮箱
+ */
 exports.forgotPassword = asyncHandler(async (req, res, next) => {
   const user = await User.findOne({ email: req.body.email.toLowerCase() })
 
@@ -141,10 +198,13 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Email could not be sent', 500))
   }
 })
-
-// @desc    Reset password
-// @route   PUT /api/v1/auth/resetpassword/:resettoken
-// @access  Public
+/**
+ * @api {put} /api/v1/auth/resetpassword/:resettoken Update cookies
+ * @apiGroup Auth
+ * @apiDescription 更改token
+ * @apiHeader {String} authorization 有效token值.
+ * @apiParam  {String} resettoken token
+ */
 exports.resetPassword = asyncHandler(async (req, res, next) => {
   // Get hashed token
   const resetPasswordToken = crypto
